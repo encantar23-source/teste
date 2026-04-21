@@ -1,0 +1,3 @@
+Nothing should be ignored in this case, as the changes only include a prototype HTML file and a README markdown file, which are both source/config files. There are no build artifacts, dependencies, or temporary files in the provided list.
+
+Therefore, the output is empty.

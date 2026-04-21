@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protótipo Mega Menu - Sistema Contábil</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Tela de Fundo Principal (simulando o sistema) */
+        .main-screen {
+            padding: 40px;
+            color: white;
+        }
+
+        .main-screen h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .main-screen p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Botão para abrir o Mega Menu */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .menu-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Overlay com Blur */
+        .mega-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+            z-index: 999;
+        }
+
+        .mega-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Mega Menu Container */
+        .mega-menu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 90%;
+            max-width: 1400px;
+            height: 80vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+            display: flex;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .mega-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Coluna Lateral (Menu Principal) */
+        .sidebar {
+            width: 280px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            padding: 30px 0;
+            transition: all 0.4s ease;
+        }
+
+        .sidebar.hidden {
+            margin-left: -280px;
+            opacity: 0;
+        }
+
+        .sidebar-title {
+            padding: 0 30px 20px;
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .menu-item:hover {
+            background: #e9ecef;
+            border-left-color: #667eea;
+        }
+
+        .menu-item.active {
+            background: #667eea;
+            color: white;
+            border-left-color: #764ba2;
+        }
+
+        .menu-item-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.3rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .menu-item.active .menu-item-icon {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .menu-item-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        /* Área de Conteúdo (Grade de Relatórios) */
+        .content-area {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateX(30px);
+            transition: all 0.4s ease 0.2s;
+        }
+
+        .content-area.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .content-header {
+            margin-bottom: 30px;
+        }
+
+        .content-title {
+            font-size: 2rem;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .content-subtitle {
+            color: #718096;
+            font-size: 1rem;
+        }
+
+        /* Grid de Cards */
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            border-color: #667eea;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .report-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .report-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .report-item:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .report-item-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .report-item-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        /* Botão de Fechar */
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #667eea;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        /* Mensagem de boas-vindas na sidebar */
+        .welcome-message {
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin: 20px 30px;
+        }
+
+        .welcome-message h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .welcome-message p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Animação de entrada dos cards */
+        .report-card {
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        .report-card:nth-child(1) { animation-delay: 0.1s; }
+        .report-card:nth-child(2) { animation-delay: 0.2s; }
+        .report-card:nth-child(3) { animation-delay: 0.3s; }
+        .report-card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Estado inicial - mostrar mensagem */
+        .initial-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: #718096;
+        }
+
+        .initial-view-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .initial-view h2 {
+            font-size: 1.8rem;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .initial-view p {
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela Principal -->
+    <div class="main-screen">
+        <h1>Sistema Contábil</h1>
+        <p>Painel de Controle - DRE em tempo real</p>
+        <div style="margin-top: 40px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            <div style="background: rgba(255,255,255,0.2); padding: 30px; border-radius: 15px;">
+                <h3 style="font-size: 2rem; margin-bottom: 10px;">R$ 1.2M</h3>
+                <p>Receita Total</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 30px; border-radius: 15px;">
+                <h3 style="font-size: 2rem; margin-bottom: 10px;">R$ 850K</h3>
+                <p>Despesas</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 30px; border-radius: 15px;">
+                <h3 style="font-size: 2rem; margin-bottom: 10px;">R$ 350K</h3>
+                <p>Lucro Líquido</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Menu -->
+    <button class="menu-toggle" onclick="toggleMenu()">☰ Abrir Menu</button>
+
+    <!-- Overlay -->
+    <div class="mega-menu-overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <!-- Mega Menu -->
+    <div class="mega-menu" id="megaMenu">
+        <button class="close-btn" onclick="toggleMenu()">×</button>
+        
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-title">Módulos</div>
+            
+            <div class="welcome-message">
+                <h3>Bem-vindo!</h3>
+                <p>Selecione uma opção abaixo</p>
+            </div>
+
+            <div class="menu-item" onclick="showReports()">
+                <div class="menu-item-icon">🏠</div>
+                <div class="menu-item-text">Home</div>
+            </div>
+            <div class="menu-item" onclick="showReports()">
+                <div class="menu-item-icon">💰</div>
+                <div class="menu-item-text">Financeiro</div>
+            </div>
+            <div class="menu-item" onclick="showReports()">
+                <div class="menu-item-icon">📄</div>
+                <div class="menu-item-text">Faturamento</div>
+            </div>
+            <div class="menu-item active" onclick="showReports()">
+                <div class="menu-item-icon">📊</div>
+                <div class="menu-item-text">Relatórios</div>
+            </div>
+            <div class="menu-item" onclick="showReports()">
+                <div class="menu-item-icon">⚙️</div>
+                <div class="menu-item-text">Administração</div>
+            </div>
+        </div>
+
+        <!-- Área de Conteúdo -->
+        <div class="content-area" id="contentArea">
+            <div class="initial-view" id="initialView">
+                <div class="initial-view-icon">👈</div>
+                <h2>Selecione "Relatórios"</h2>
+                <p>Clique em Relatórios na barra lateral para ver a grade de relatórios</p>
+            </div>
+
+            <div id="reportsView" style="display: none;">
+                <div class="content-header">
+                    <h1 class="content-title">Relatórios</h1>
+                    <p class="content-subtitle">Selecione o relatório desejado</p>
+                </div>
+
+                <div class="reports-grid">
+                    <!-- Card FINANCEIROS -->
+                    <div class="report-card">
+                        <div class="card-header">
+                            <div class="card-icon">💵</div>
+                            <div class="card-title">FINANCEIROS</div>
+                        </div>
+                        <div class="report-items">
+                            <div class="report-item" onclick="openReport('Fluxo de Caixa')">
+                                <div class="report-item-icon">📈</div>
+                                <div class="report-item-name">Fluxo de Caixa</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('DRE Convencional')">
+                                <div class="report-item-icon">📋</div>
+                                <div class="report-item-name">DRE Convencional</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('Balancete')">
+                                <div class="report-item-icon">⚖️</div>
+                                <div class="report-item-name">Balancete</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('Razão Contábil')">
+                                <div class="report-item-icon">📖</div>
+                                <div class="report-item-name">Razão Contábil</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card DRE WEB -->
+                    <div class="report-card">
+                        <div class="card-header">
+                            <div class="card-icon">🌐</div>
+                            <div class="card-title">DRE WEB</div>
+                        </div>
+                        <div class="report-items">
+                            <div class="report-item" onclick="openReport('DRE Web')">
+                                <div class="report-item-icon">🖥️</div>
+                                <div class="report-item-name">DRE Web</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('DRE Gerencial')">
+                                <div class="report-item-icon">📊</div>
+                                <div class="report-item-name">DRE Gerencial</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('CFO Digital')">
+                                <div class="report-item-icon">🤖</div>
+                                <div class="report-item-name">CFO Digital</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('DRE Comparativo')">
+                                <div class="report-item-icon">🔄</div>
+                                <div class="report-item-name">DRE Comparativo</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card ANÁLISES AVANÇADAS -->
+                    <div class="report-card">
+                        <div class="card-header">
+                            <div class="card-icon">🔬</div>
+                            <div class="card-title">ANÁLISES AVANÇADAS</div>
+                        </div>
+                        <div class="report-items">
+                            <div class="report-item" onclick="openReport('Pareto')">
+                                <div class="report-item-icon">📉</div>
+                                <div class="report-item-name">Pareto (80/20)</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('Curva ABC')">
+                                <div class="report-item-icon">📊</div>
+                                <div class="report-item-name">Curva ABC</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('Indicadores KPI')">
+                                <div class="report-item-icon">🎯</div>
+                                <div class="report-item-name">Indicadores KPI</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('Análise Vertical')">
+                                <div class="report-item-icon">📐</div>
+                                <div class="report-item-name">Análise Vertical</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card OUTROS RELATÓRIOS -->
+                    <div class="report-card">
+                        <div class="card-header">
+                            <div class="card-icon">📁</div>
+                            <div class="card-title">OUTROS RELATÓRIOS</div>
+                        </div>
+                        <div class="report-items">
+                            <div class="report-item" onclick="openReport('Livro Diário')">
+                                <div class="report-item-icon">📕</div>
+                                <div class="report-item-name">Livro Diário</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('Livro Razão')">
+                                <div class="report-item-icon">📘</div>
+                                <div class="report-item-name">Livro Razão</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('Balanço Patrimonial')">
+                                <div class="report-item-icon">⚖️</div>
+                                <div class="report-item-name">Balanço Patrimonial</div>
+                            </div>
+                            <div class="report-item" onclick="openReport('DCF Fluxo')">
+                                <div class="report-item-icon">💹</div>
+                                <div class="report-item-name">DCF Fluxo</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isMenuOpen = false;
+
+        function toggleMenu() {
+            const overlay = document.getElementById('overlay');
+            const megaMenu = document.getElementById('megaMenu');
+            const menuToggle = document.querySelector('.menu-toggle');
+
+            if (isMenuOpen) {
+                // Fechar menu
+                overlay.classList.remove('active');
+                megaMenu.classList.remove('active');
+                menuToggle.textContent = '☰ Abrir Menu';
+                
+                setTimeout(() => {
+                    resetView();
+                }, 400);
+            } else {
+                // Abrir menu
+                overlay.classList.add('active');
+                megaMenu.classList.add('active');
+                menuToggle.textContent = '✕ Fechar Menu';
+            }
+
+            isMenuOpen = !isMenuOpen;
+        }
+
+        function showReports() {
+            const sidebar = document.getElementById('sidebar');
+            const contentArea = document.getElementById('contentArea');
+            const initialView = document.getElementById('initialView');
+            const reportsView = document.getElementById('reportsView');
+
+            // Esconder sidebar
+            sidebar.classList.add('hidden');
+
+            // Mostrar área de conteúdo com animação
+            setTimeout(() => {
+                contentArea.classList.add('visible');
+                initialView.style.display = 'none';
+                reportsView.style.display = 'block';
+            }, 200);
+
+            // Atualizar itens do menu
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+
+        function resetView() {
+            const sidebar = document.getElementById('sidebar');
+            const contentArea = document.getElementById('contentArea');
+            const initialView = document.getElementById('initialView');
+            const reportsView = document.getElementById('reportsView');
+
+            // Resetar para visualização inicial
+            sidebar.classList.remove('hidden');
+            contentArea.classList.remove('visible');
+            
+            setTimeout(() => {
+                initialView.style.display = 'flex';
+                reportsView.style.display = 'none';
+            }, 200);
+
+            // Resetar itens do menu
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+
+        function openReport(reportName) {
+            alert(`🚀 Abrindo relatório: ${reportName}\n\nO Mega Menu será fechado e o relatório carregará em tela cheia.`);
+            toggleMenu();
+        }
+
+        // Fechar com ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isMenuOpen) {
+                toggleMenu();
+            }
+        });
+    </script>
+</body>
+</html>
